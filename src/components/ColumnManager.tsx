@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Edit, Trash2, GripVertical } from "lucide-react";
+import { X, Plus, Edit, Trash2, GripVertical, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -61,6 +61,9 @@ const ColumnManager = ({ onClose }) => {
   
   const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
   const [optionLabel, setOptionLabel] = useState("");
+  const [newOptionLabel, setNewOptionLabel] = useState("");
+  const [newOptionColor, setNewOptionColor] = useState("blue");
+  const [addingOption, setAddingOption] = useState(false);
 
   const handleAddColumn = () => {
     if (!columnName.trim()) return;
@@ -78,6 +81,25 @@ const ColumnManager = ({ onClose }) => {
 
   const handleRemoveColumn = (id: string) => {
     setColumns(columns.filter(column => column.id !== id));
+  };
+  
+  const handleAddStatusOption = () => {
+    if (!newOptionLabel.trim()) return;
+    
+    const newOption = {
+      id: Date.now().toString(),
+      label: newOptionLabel,
+      color: newOptionColor,
+    };
+    
+    setStatusOptions([...statusOptions, newOption]);
+    setNewOptionLabel("");
+    setNewOptionColor("blue");
+    setAddingOption(false);
+  };
+  
+  const handleRemoveStatusOption = (id: string) => {
+    setStatusOptions(statusOptions.filter(option => option.id !== id));
   };
 
   return (
@@ -190,7 +212,67 @@ const ColumnManager = ({ onClose }) => {
               <div className="p-6 border-t">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-700">Status Options</h3>
+                  <Button 
+                    variant="outline" 
+                    className="text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                    onClick={() => setAddingOption(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Option
+                  </Button>
                 </div>
+                
+                {/* Add New Status Option Form */}
+                {addingOption && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 p-4 border border-indigo-100 bg-indigo-50/50 rounded-lg"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,auto] gap-3 items-center">
+                      <Input
+                        value={newOptionLabel}
+                        onChange={(e) => setNewOptionLabel(e.target.value)}
+                        placeholder="Option label"
+                        className="w-full"
+                      />
+                      <Select value={newOptionColor} onValueChange={setNewOptionColor}>
+                        <SelectTrigger className="w-28">
+                          <SelectValue placeholder="Color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.keys(STATUS_COLORS).map((color) => (
+                            <SelectItem key={color} value={color}>
+                              <div className="flex items-center">
+                                <div className={`w-3 h-3 rounded-full ${STATUS_COLORS[color].dot} mr-2`}></div>
+                                {color.charAt(0).toUpperCase() + color.slice(1)}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={handleAddStatusOption}
+                          size="sm"
+                          className="bg-indigo-600 hover:bg-indigo-700"
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Add
+                        </Button>
+                        <Button
+                          onClick={() => setAddingOption(false)}
+                          size="sm"
+                          variant="outline"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                
                 <div className="space-y-3">
                   {statusOptions.map((option) => (
                     <motion.div
@@ -249,7 +331,12 @@ const ColumnManager = ({ onClose }) => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-gray-500 hover:text-red-600">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-gray-500 hover:text-red-600"
+                          onClick={() => handleRemoveStatusOption(option.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
